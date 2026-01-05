@@ -1,6 +1,9 @@
 import { MiniAppPaymentSuccessPayload } from "@worldcoin/minikit-js";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "../../../lib/db";
+import { transactions } from "../../../lib/schema";
+import { eq } from "drizzle-orm";
 
 interface IRequestPayload {
   payload: MiniAppPaymentSuccessPayload;
@@ -9,10 +12,7 @@ interface IRequestPayload {
 export async function POST(req: NextRequest) {
   const { payload } = (await req.json()) as IRequestPayload;
 
-  // IMPORTANT: Here we should fetch the reference you created in /initiate-payment to ensure the transaction we are verifying is the same one we initiated
-  //   const reference = getReferenceFromDB();
   const cookieStore = cookies();
-
   const reference = cookieStore.get("payment-nonce")?.value;
 
   console.log(reference);
@@ -20,6 +20,13 @@ export async function POST(req: NextRequest) {
   if (!reference) {
     return NextResponse.json({ success: false });
   }
+
+  // Find transaction in DB
+  const transaction = await db.select().from(transactions).where(eq(transactions.id, reference)).limit(1);
+  if (!transaction.length) {
+    return NextResponse.json({ success: false });
+  }
+
   console.log(payload);
   // 1. Check that the transaction we received from the mini app is the same one we sent
   if (payload.reference === reference) {
@@ -32,13 +39,19 @@ export async function POST(req: NextRequest) {
         },
       }
     );
-    const transaction = await response.json();
+    const txData = await response.json();
     // 2. Here we optimistically confirm the transaction.
     // Otherwise, you can poll until the status == mined
-    if (transaction.reference == reference && transaction.status != "failed") {
-      return NextResponse.json({ success: true });
+    if (txData.reference == reference && txData.status != "failed") {
+      // Update transaction status
+      await db.update(transactions).set({
+        status: "confirmed",
+        transactionId: payload.transaction_id,
+      }).where(eq(transactions.id, reference));
+      return NextResponse.json({ success: true, transactionId: payload.transaction_id });
     } else {
       return NextResponse.json({ success: false });
     }
   }
+  return NextResponse.json({ success: false });
 }

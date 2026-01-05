@@ -1,32 +1,36 @@
-## This template provides a minimal setup to get Next.js working with MiniKit
+## Mini App de Pagos con WorldCoin MiniKit
+
+Esta aplicación permite enviar pagos en criptomonedas (WLD) a destinatarios preestablecidos, con autenticación via World ID, verificación y enlace a blockchain.
+
+## Características
+- Autenticación con World ID usando IDKit
+- Formulario para seleccionar destinatario, ingresar monto y datos personales
+- Generación de hash único de transacción
+- Confirmación de pagos via MiniKit
+- Enlace a PolygonScan para ver transacciones
+- Vista para destinatarios: Ver transacciones recibidas y marcar como completadas
 
 ## Setup
 
 ```bash
 cp .env.example .env
-pnpm i
-pnpm dev
-
+npm install
+npm run dev
 ```
 
-To run as a mini app choose a production app in the dev portal and use NGROK to tunnel. Set the `NEXTAUTH_URL` and the redirect url if using sign in with worldcoin to that ngrok url
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Para usar la aplicación, configura:
 
-To use the application, you'll need to:
+1. **Credenciales de World ID**
+    Desde el [World ID Developer Portal](https://developer.worldcoin.org/):
 
-1. **Get World ID Credentials**
-   From the [World ID Developer Portal](https://developer.worldcoin.org/):
+    - Crea una app para obtener `NEXT_PUBLIC_APP_ID`
+    - Obtén `DEV_PORTAL_API_KEY` de la sección API Keys
+    - Crea una acción "sign-in" en "Incognito Actions" para autenticación
 
-   - Create a new app to get your `APP_ID`
-   - Get `DEV_PORTAL_API_KEY` from the API Keys section
-   - Navigate to "Sign in with World ID" page to get:
-     - `WLD_CLIENT_ID`
-     - `WLD_CLIENT_SECRET`
-
-2. **Configure Action**
-   - In the Developer Portal, create an action in the "Incognito Actions" section
-   - Use the same action name in `components/Verify/index.tsx`
+2. **Configurar Destinatarios**
+    Edita el array `recipients` en `components/Pay/index.tsx` para agregar más destinatarios.
 
 View docs: [Docs](https://docs.world.org/)
 
