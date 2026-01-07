@@ -28,7 +28,7 @@ export default function RecipientPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`/api/transactions/${wallet}`);
+      const res = await fetch(`/api/transactions/recipient/${wallet}`);
       if (res.ok) {
         const data = await res.json();
         setTransactions(data);

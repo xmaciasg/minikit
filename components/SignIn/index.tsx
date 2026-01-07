@@ -29,7 +29,7 @@ export const SignIn = () => {
           onSuccess={handleSuccess}
           verification_level={VerificationLevel.Orb}
         >
-          {({ open }) => <button onClick={open}>Sign in</button>}
+          {({ open }: { open: () => void }) => <button onClick={open}>Sign in</button>}
         </IDKitWidget>
       </>
     );

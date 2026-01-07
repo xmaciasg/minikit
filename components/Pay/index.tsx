@@ -5,14 +5,16 @@ import {
   Tokens,
   PayCommandInput,
 } from "@worldcoin/minikit-js";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-// Hardcode recipients
-const recipients = [
-  { name: "Mauricio Calero", 
-    wallet: "0x5660199c29ce99cadade93c80f95f1e7e7d05c57",
-    phone: "+593 99 875 9222"}
-];
+interface Recipient {
+  wallet: string;
+  name: string;
+  phone: string;
+  bankName: string;
+  bankAccount: string;
+  accountType: string;
+}
 
 interface SenderDetails {
   name: string;
@@ -22,7 +24,7 @@ interface SenderDetails {
   accountType: string;
 }
 
-const sendPayment = async (to: string, amount: number, senderDetails: SenderDetails, setStatus: (status: string) => void, setTransactionHash: (hash: string) => void) => {
+const sendPayment = async (to: string, amount: number, senderDetails: SenderDetails, recipientName: string, setStatus: (status: string) => void, setTransactionHash: (hash: string) => void) => {
   try {
     setStatus("Iniciando transacción...");
     const res = await fetch(`/api/initiate-payment`, {
@@ -46,7 +48,7 @@ const sendPayment = async (to: string, amount: number, senderDetails: SenderDeta
           token_amount: tokenToDecimals(amount, Tokens.WLD).toString(),
         },
       ],
-      description: `Pago a ${recipients.find(r => r.wallet === to)?.name} - Hash: ${hash}`,
+      description: `Pago a ${recipientName} - Hash: ${hash}`,
     };
     if (MiniKit.isInstalled()) {
       return await MiniKit.commandsAsync.pay(payload);
@@ -59,7 +61,10 @@ const sendPayment = async (to: string, amount: number, senderDetails: SenderDeta
 };
 
 export const PayBlock = () => {
-  const [selectedRecipient, setSelectedRecipient] = useState(recipients[0].wallet);
+  // Cotización del momento (WLD → USD) - Se puede integrar con API más adelante
+  const [exchangeRate, setExchangeRate] = useState<number>(2.50);
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [selectedRecipient, setSelectedRecipient] = useState<string>("");
   const [amount, setAmount] = useState<number>(0);
   const [senderDetails, setSenderDetails] = useState<SenderDetails>({
     name: "",
@@ -70,23 +75,64 @@ export const PayBlock = () => {
   });
   const [status, setStatus] = useState<string>("");
   const [transactionHash, setTransactionHash] = useState<string>("");
+  const [transactionId, setTransactionId] = useState<string>("");
+
+  // Cálculos de comisión (15%)
+  const commissionRate = 0.15;
+  const totalUSD = amount * exchangeRate;
+  const commissionUSD = totalUSD * commissionRate;
+  const netAmountUSD = totalUSD - commissionUSD;
+  const netAmountWLD = netAmountUSD / exchangeRate;
+
+  useEffect(() => {
+    // Fetch precio en tiempo real
+    const fetchPrice = async () => {
+      try {
+        const res = await fetch('/api/price');
+        const data = await res.json();
+        if (data.price) {
+          setExchangeRate(data.price);
+        }
+      } catch (err) {
+        console.error('Error fetching price:', err);
+      }
+    };
+    fetchPrice();
+    // Refresh cada 60 segundos
+    const interval = setInterval(fetchPrice, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // Fetch recipients from API
+    fetch('/api/recipients')
+      .then(res => res.json())
+      .then(data => {
+        setRecipients(data);
+        if (data.length > 0) {
+          setSelectedRecipient(data[0].wallet);
+        }
+      })
+      .catch(err => console.error('Error fetching recipients:', err));
+  }, []);
 
   const handlePay = async () => {
-    if (!MiniKit.isInstalled()) {
-      setStatus("MiniKit no está instalado");
-      return;
-    }
-    if (!amount || amount <= 0) {
-      setStatus("Ingresa un monto válido");
-      return;
-    }
-    if (!senderDetails.name || !senderDetails.whatsapp || !senderDetails.bankAccount || !senderDetails.bankName || !senderDetails.accountType) {
-      setStatus("Completa todos los datos del remitente");
+    const selected = recipients.find(r => r.wallet === selectedRecipient);
+    if (!selected) {
+      setStatus("Por favor selecciona un destinatario");
       return;
     }
 
-    const sendPaymentResponse = await sendPayment(selectedRecipient, amount, senderDetails, setStatus, setTransactionHash);
-    const response = sendPaymentResponse?.finalPayload;
+    const result = await sendPayment(
+      selectedRecipient,
+      amount,
+      senderDetails,
+      selected.name,
+      setStatus,
+      setTransactionHash
+    );
+
+    const response = result?.finalPayload;
     if (!response) {
       setStatus("Error en el pago");
       return;
@@ -101,7 +147,7 @@ export const PayBlock = () => {
       const payment = await res.json();
       if (payment.success) {
         setStatus("Transacción completa");
-        // transactionHash already set
+        setTransactionId(payment.transactionId);
       } else {
         setStatus("Pago fallido");
       }
@@ -138,6 +184,25 @@ export const PayBlock = () => {
           step="0.01"
         />
       </div>
+      
+      {/* Panel de Cotización y Comisión */}
+      <div className="mb-4 p-3 bg-gray-100 rounded">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-bold">Cotización del Día</h3>
+
+        </div>
+        <div className="flex items-center mb-2">
+          <label className="block mr-2">1 WLD = USD:</label>
+          <span className="border p-2 w-48 bg-white font-bold">${exchangeRate.toFixed(8)}</span>
+        </div>
+        <div className="text-sm space-y-1">
+          <p>Monto en USD: <strong>${totalUSD.toFixed(2)}</strong></p>
+          <p className="text-red-500">Comisión (15%): <strong>-${commissionUSD.toFixed(2)}</strong></p>
+          <p className="text-green-500 font-bold">Total a recibir: <strong>${netAmountUSD.toFixed(2)}</strong></p>
+          <p className="text-gray-500 text-xs">Equivalente a <strong>{netAmountWLD.toFixed(4)} WLD</strong></p>
+        </div>
+      </div>
+
       <div className="mb-4">
         <label className="block mb-2">Nombre:</label>
         <input
@@ -208,6 +273,18 @@ export const PayBlock = () => {
               );
             })()}
           </div>
+          {transactionId && (
+            <div className="mt-2">
+              <a
+                href={`https://polygonscan.com/tx/${transactionId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-500 text-white px-4 py-2 rounded inline-block"
+              >
+                Ver en Blockchain
+              </a>
+            </div>
+          )}
         </div>
       )}
     </div>
