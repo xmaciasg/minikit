@@ -7,12 +7,14 @@ import {
   PayCommandInput,
 } from "@worldcoin/minikit-js";
 import { useState, useEffect } from "react";
+import { isValidAddress } from "../../lib/blockchain";
 
 declare global {
   interface Window {
     MiniKit: any;
   }
 }
+
 interface Recipient {
   id: number;
   wallet: string;
@@ -82,6 +84,7 @@ export const PayBlock = () => {
   const [selectedRecipient, setSelectedRecipient] = useState<string>("");
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<string>("");
+  const [selectedToken, setSelectedToken] = useState<'WLD' | 'USDC'>('WLD');
   const [amount, setAmount] = useState<number>(0);
   const [senderDetails, setSenderDetails] = useState<SenderDetails>({
     name: "",
@@ -93,11 +96,11 @@ export const PayBlock = () => {
   const [status, setStatus] = useState<string>("");
   const [transactionHash, setTransactionHash] = useState<string>("");
   const [transactionId, setTransactionId] = useState<string>("");
-  const [walletBalances, setWalletBalances] = useState<{
-    WLD: string;
-    USDC: string;
-  } | null>(null);
-  const [walletError, setWalletError] = useState<string | null>(null);
+  // const [walletBalances, setWalletBalances] = useState<{
+  //   WLD: string;
+  //   USDC: string;
+  // } | null>(null);
+  // const [walletError, setWalletError] = useState<string | null>(null);
 
   // Cálculos de comisión (15% para broker, 5% para agente - solo informativo)
   const brokerCommissionRate = 0.15;
@@ -128,62 +131,48 @@ export const PayBlock = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    // Fetch wallet balances
-    const fetchWalletBalances = async () => {
-      try {
-        if (typeof window !== 'undefined' && window.MiniKit) {
-          // Verificar si la función getBalance existe
-          if (typeof window.MiniKit.commandsAsync.getBalance === 'function') {
-            const balances = await window.MiniKit.commandsAsync.getBalance();
-            setWalletBalances({
-              WLD: balances.WLD || '0',
-              USDC: balances.USDC || '0',
-            });
-          } else if (typeof window.MiniKit.commandsAsync.getBalances === 'function') {
-            // Intentar con getBalances si getBalance no existe
-            const balances = await window.MiniKit.commandsAsync.getBalances();
-            setWalletBalances({
-              WLD: balances.WLD || '0',
-              USDC: balances.USDC || '0',
-            });
-          } else {
-            // Intentar acceder a los balances directamente si están disponibles
-            if (window.MiniKit.balance) {
-              setWalletBalances({
-                WLD: window.MiniKit.balance.WLD || '0',
-                USDC: window.MiniKit.balance.USDC || '0',
-              });
-            } else {
-              // Si ninguna función está disponible, establecer balances en cero
-              setWalletBalances({
-                WLD: '0',
-                USDC: '0',
-              });
-              setWalletError('La función para obtener balances no está disponible en MiniKit. Mostrando balances predeterminados.');
-            }
-          }
-        } else {
-          // Si MiniKit no está disponible, establecer balances en cero
-          setWalletBalances({
-            WLD: '0',
-            USDC: '0',
-          });
-          setWalletError('MiniKit no está disponible. Mostrando balances predeterminados.');
-        }
-      } catch (err) {
-        console.error('Error fetching wallet balances:', err);
-        // En caso de error, establecer balances en cero
-        setWalletBalances({
-          WLD: '0',
-          USDC: '0',
-        });
-        const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-        setWalletError(`Error al obtener los balances de la wallet: ${errorMessage}. Mostrando balances predeterminados.`);
-      }
-    };
-    fetchWalletBalances();
-  }, []);
+  // const fetchWalletBalances = async () => {
+  //   try {
+  //     if (MiniKit.isInstalled()) {
+  //       const res = await fetch('/api/nonce');
+  //       const { nonce } = await res.json();
+  //       const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
+  //         nonce: nonce,
+  //         requestId: 'balance-check',
+  //         expirationTime: new Date(Date.now() + 5 * 60 * 1000),
+  //         notBefore: new Date(),
+  //         statement: 'Checking wallet balances.',
+  //       });
+  //       if (finalPayload.status === 'success' && finalPayload.address) {
+  //         const walletAddress = finalPayload.address;
+  //         const apiRes = await fetch(`/api/balances?address=${walletAddress}`);
+  //         if (!apiRes.ok) {
+  //           throw new Error('Failed to fetch balances from API');
+  //         }
+  //         const balances = await apiRes.json();
+  //         setWalletBalances({
+  //           WLD: balances.WLD,
+  //           USDC: balances.USDC,
+  //         });
+  //         setWalletError(null);
+  //       } else {
+  //         throw new Error('Wallet auth failed');
+  //       }
+  //     } else {
+  //       setWalletError('MiniKit no disponible');
+  //       setWalletBalances({
+  //         WLD: '0',
+  //         USDC: '0',
+  //       });
+  //     }
+  //   } catch (err) {
+  //     setWalletError(`Error: ${err instanceof Error ? err.message : 'Desconocido'}`);
+  //     setWalletBalances({
+  //       WLD: '0',
+  //       USDC: '0',
+  //     });
+  //   }
+  // };
 
   useEffect(() => {
     // Fetch recipients from API
@@ -267,26 +256,6 @@ export const PayBlock = () => {
     <div className="p-4 border rounded">
       <h2 className="text-lg font-bold mb-4">Enviar Pago</h2>
 
-      {walletBalances && (
-        <div className="mb-4 p-3 bg-gray-100 rounded">
-          <h3 className="font-bold mb-2">Saldos de tu Wallet</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">WLD:</p>
-              <p className="font-bold">{walletBalances.WLD}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">USDC:</p>
-              <p className="font-bold">{walletBalances.USDC}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      {walletError && (
-        <div className="mb-4 p-3 bg-red-100 rounded">
-          <p className="text-red-500">{walletError}</p>
-        </div>
-      )}
 
       <div className="mb-4">
         <label className="block mb-2">Destinatario:</label>
@@ -300,6 +269,18 @@ export const PayBlock = () => {
               {r.name}
             </option>
           ))}
+        </select>
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-2">Token:</label>
+        <select
+          value={selectedToken}
+          onChange={(e) => setSelectedToken(e.target.value as 'WLD' | 'USDC')}
+          className="border p-2 w-full"
+        >
+          <option value="WLD">WLD</option>
+          <option value="USDC">USDC</option>
         </select>
       </div>
 
@@ -320,7 +301,7 @@ export const PayBlock = () => {
         </div>
       )}
       <div className="mb-4">
-        <label className="block mb-2">Monto (WLD):</label>
+        <label className="block mb-2">Monto ({selectedToken}):</label>
         <input
           type="number"
           value={amount}
@@ -338,8 +319,8 @@ export const PayBlock = () => {
 
         </div>
         <div className="flex items-center mb-2">
-          <label className="block mr-2">1 WLD = USD:</label>
-          <span className="border p-2 w-48 bg-white font-bold">${exchangeRate.toFixed(8)}</span>
+          <label className="block mr-2">1 {selectedToken} = USD:</label>
+          <span className="border p-2 w-48 bg-white font-bold">${selectedToken === 'USDC' ? '1.00000000' : exchangeRate.toFixed(8)}</span>
         </div>
         <div className="text-sm space-y-1">
           <p>Monto en USD: <strong>${totalUSD.toFixed(2)}</strong></p>

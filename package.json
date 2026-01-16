@@ -19,6 +19,7 @@
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.1",
     "eruda": "^3.2.3",
+    "ethers": "^6.16.0",
     "next": "14.2.6",
     "next-auth": "^4.24.7",
     "prisma": "^7.2.0",
