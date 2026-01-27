@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { ClosedNav } from "../../components/Navigation/ClosedNav";
 
 interface Transaction {
   id: string;
@@ -63,8 +64,10 @@ export default function RecipientPage() {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">Vista de Destinatario</h1>
+    <>
+      <ClosedNav />
+      <div className="p-4">
+        <h1 className="text-2xl font-bold mb-6">Vista de Destinatario</h1>
       <div className="mb-4">
         <label className="block mb-2">Ingresa tu wallet:</label>
         <input
@@ -114,6 +117,6 @@ export default function RecipientPage() {
           </div>
         ))}
       </div>
-    </div>
+    </>
   );
 }
