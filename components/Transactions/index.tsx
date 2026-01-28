@@ -113,8 +113,8 @@ export const TransactionsBlock = () => {
               <th className="py-2 px-4 border">Destinatario</th>
               <th className="py-2 px-4 border">Monto (WLD)</th>
               <th className="py-2 px-4 border">Total (USD)</th>
-              <th className="py-2 px-4 border">Comisión Broker (USD)</th>
-              <th className="py-2 px-4 border">Comisión Agente (USD)</th>
+              <th className="py-2 px-4 border">Broker (USD)</th>
+              <th className="py-2 px-4 border">Agente (USD)</th>
               <th className="py-2 px-4 border">Neto (USD)</th>
               <th className="py-2 px-4 border">Neto (WLD)</th>
               <th className="py-2 px-4 border">Estado</th>

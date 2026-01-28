@@ -39,6 +39,7 @@ interface SenderDetails {
   bankAccount: string;
   bankName: string;
   accountType: string;
+  dni: string;
 }
 
 const sendPayment = async (to: string, amount: number, senderDetails: SenderDetails, recipientName: string, agentId: string | null, exchangeRate: number, brokerCommissionUSD: number, agentCommissionUSD: number, netAmountUSD: number, setStatus: (status: string) => void, setTransactionHash: (hash: string) => void) => {
@@ -92,6 +93,7 @@ export const PayBlock = () => {
     bankAccount: "",
     bankName: "",
     accountType: "",
+    dni: "",
   });
   const [status, setStatus] = useState<string>("");
   const [transactionHash, setTransactionHash] = useState<string>("");
@@ -349,6 +351,16 @@ export const PayBlock = () => {
         />
       </div>
       <div className="mb-4">
+        <label className="block mb-2">DNI:</label>
+        <input
+          type="text"
+          value={senderDetails.dni}
+          onChange={(e) => setSenderDetails({ ...senderDetails, dni: e.target.value })}
+          className="border p-2 w-full"
+          placeholder="Documento de Identidad"
+        />
+      </div>
+      <div className="mb-4">
         <label className="block mb-2">Formas de pago:</label>
         <select
           value={senderDetails.accountType}
@@ -388,7 +400,7 @@ export const PayBlock = () => {
       </button>
       {status && <p className="mt-4 text-center text-sm break-words">{status}</p>}
       {transactionHash && (
-        <div className="mt-4 w-full space-y-3">
+        <div className="mt-4 w-full space-y-3">DNI: ${senderDetails.dni}\n
           <div className="p-3 bg-gray-50 rounded break-all">
             <p className="text-xs font-bold mb-1">Hash de Transacción:</p>
             <p className="text-xs">{transactionHash}</p>
