@@ -253,7 +253,7 @@ export const PayBlock = () => {
   };
 
   return (
-    <div className="p-4 border rounded">
+    <div className="p-4 border rounded w-full overflow-x-hidden">
       <h2 className="text-lg font-bold mb-4">Enviar Pago</h2>
 
 
@@ -318,9 +318,9 @@ export const PayBlock = () => {
           <h3 className="font-bold">Cotización del Día</h3>
 
         </div>
-        <div className="flex items-center mb-2">
-          <label className="block mr-2">1 {selectedToken} = USD:</label>
-          <span className="border p-2 w-48 bg-white font-bold">${selectedToken === 'USDC' ? '1.00000000' : exchangeRate.toFixed(8)}</span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+          <label className="block">1 {selectedToken} = USD:</label>
+          <span className="border p-2 bg-white font-bold text-sm break-all">${selectedToken === 'USDC' ? '1.00000000' : exchangeRate.toFixed(8)}</span>
         </div>
         <div className="text-sm space-y-1">
           <p>Monto en USD: <strong>${totalUSD.toFixed(2)}</strong></p>
@@ -383,14 +383,17 @@ export const PayBlock = () => {
           </div>
         </>
       ) : null}
-      <button className="bg-blue-500 text-white p-4 rounded" onClick={handlePay}>
+      <button className="bg-blue-500 text-white p-4 rounded w-full font-bold" onClick={handlePay}>
         Enviar Pago
       </button>
-      {status && <p className="mt-4">{status}</p>}
+      {status && <p className="mt-4 text-center text-sm break-words">{status}</p>}
       {transactionHash && (
-        <div className="mt-4">
-          <p>Hash de Transacción: {transactionHash}</p>
-          <div className="mt-2">
+        <div className="mt-4 w-full space-y-3">
+          <div className="p-3 bg-gray-50 rounded break-all">
+            <p className="text-xs font-bold mb-1">Hash de Transacción:</p>
+            <p className="text-xs">{transactionHash}</p>
+          </div>
+          <div className="flex flex-col gap-2">
             {(() => {
               const recipient = recipients.find(r => r.wallet === selectedRecipient);
               return (
@@ -398,25 +401,23 @@ export const PayBlock = () => {
                   href={`https://wa.me/${recipient?.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hash de transacción: ${transactionHash}\n\nDatos del remitente:\nNombre: ${senderDetails.name}\nWhatsApp: ${senderDetails.whatsapp}\nCuenta bancaria: ${senderDetails.bankAccount}\nBanco: ${senderDetails.bankName}\nTipo de cuenta: ${senderDetails.accountType}\n\nDatos de la transacción:\nMonto enviado en WLD: ${amount}\nComisión del broker (15%): $${brokerCommissionUSD.toFixed(2)}\nComisión del agente (5%): $${agentCommissionUSD.toFixed(2)} (pagada por el broker)\nTotal a recibir en USD: $${netAmountUSD.toFixed(2)}\nTotal a recibir en WLD: ${netAmountWLD.toFixed(4)}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-green-500 text-white px-4 py-2 rounded inline-block"
+                  className="bg-green-500 text-white px-4 py-2 rounded text-center w-full break-words"
                 >
                   Compartir con {recipient?.name}
                 </a>
               );
             })()}
-          </div>
-          {transactionId && (
-            <div className="mt-2">
+            {transactionId && (
               <a
                 href={`https://polygonscan.com/tx/${transactionId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-blue-500 text-white px-4 py-2 rounded inline-block"
+                className="bg-blue-500 text-white px-4 py-2 rounded text-center w-full break-words"
               >
                 Ver en Blockchain
               </a>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>
