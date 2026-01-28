@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
       totalUSD: transactions.totalUSD,
       brokerCommissionUSD: transactions.brokerCommissionUSD,
       agentCommissionUSD: transactions.agentCommissionUSD,
+      commissionUSD: transactions.commissionUSD,
       netAmountUSD: transactions.netAmountUSD,
       netAmountWLD: transactions.netAmountWLD,
       status: transactions.status,

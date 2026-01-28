@@ -19,6 +19,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Recipient not found" }, { status: 400 });
   }
 
+  // Calculate commission amounts
+  const totalUSD = amount * exchangeRate;
+  const brokerCommissionRate = 0.15;
+  const agentCommissionRate = 0.05;
+  const brokerCommissionUSD = totalUSD * brokerCommissionRate;
+  const agentCommissionUSD = totalUSD * agentCommissionRate;
+  const commissionUSD = brokerCommissionUSD; // Solo broker commission se descuenta
+  const netAmountUSD = totalUSD - commissionUSD;
+  const netAmountWLD = netAmountUSD / exchangeRate;
+
   // Store transaction data
   await db.insert(transactions).values({
     id: uuid,
@@ -32,13 +42,17 @@ export async function POST(req: NextRequest) {
     senderAccountType: senderDetails.accountType,
     amount,
     exchangeRate,
-    brokerCommissionRate: 0.15,
-    agentCommissionRate: 0.05,
-    brokerCommissionUSD: (amount * exchangeRate) * 0.15,
-    agentCommissionUSD: (amount * exchangeRate) * 0.05,
-    totalUSD: amount * exchangeRate,
-    netAmountUSD: (amount * exchangeRate) - ((amount * exchangeRate) * 0.15),
-    netAmountWLD: ((amount * exchangeRate) - ((amount * exchangeRate) * 0.15)) / exchangeRate,
+    commissionRate: brokerCommissionRate,
+    commissionUSD,
+    totalUSD,
+    brokerCommissionRate,
+    agentCommissionRate,
+    brokerCommissionUSD,
+    agentCommissionUSD,
+    netAmountUSD,
+    netAmountWLD,
+    token: 'WLD',
+    netAmountToken: netAmountWLD,
     status: "initiated",
     recipientCompleted: false,
     createdAt: new Date(),
