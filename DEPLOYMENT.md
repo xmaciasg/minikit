@@ -8,14 +8,38 @@ Railway es la opción más simple para desplegar Next.js con SQLite persistente.
 
 ### Configuración Rápida en Railway
 
-1. Conecta tu repositorio a Railway
-2. En el panel de Railway, en tu servicio:
-   - Ve a "Volumes"
-   - Crea un nuevo volumen llamado `sqlite-data` montado en `/data`
-3. Agrega variable de entorno: `DATA_DIR=/data`
-4. Deploy automático desde tu rama
+#### Para Deploy Inicial o Nuevo Servicio:
 
-Railway manejará el build y reinicio automático. Tu base de datos SQLite persistirá en el volumen.
+1. **Conecta tu repositorio a Railway**
+   - Ve a [railway.app](https://railway.app)
+   - Conecta tu repo de GitHub
+
+2. **Crea un volumen persistente** (CRÍTICO - sin esto perderás datos)
+   - En el servicio → "Volumes"
+   - Crea nuevo volumen con Mount Path: `/data`
+   - El nombre del volumen se asigna automáticamente
+
+3. **Agrega variable de entorno**
+   - En el servicio → "Variables"
+   - Agrega: `DATA_DIR=/data`
+
+4. **Deploy**
+   - Railway hará build automático
+   - El script `scripts/init-db.js` se ejecuta al iniciar
+   - La BD se inicializa con datos de ejemplo
+
+#### Para Deploy Posterior (Sin Perder Datos):
+
+1. Solo haz push a tu rama
+2. Railway detecta cambios y hace redeploy automático
+3. El volumen `/data` persiste, tus transacciones se mantienen ✅
+
+### ⚠️ Checklist Antes de Cada Deploy Nuevo:
+
+- [ ] Volumen creado con Mount Path `/data`
+- [ ] Variable `DATA_DIR=/data` agregada
+- [ ] `.env` tiene credenciales correctas de WorldCoin
+- [ ] `git push` hace el deploy automático
 
 ---
 
