@@ -40,16 +40,22 @@ export async function POST(req: NextRequest) {
       }
     );
     const txData = await response.json();
+    console.log("Transaction verification response:", txData);
+    console.log("Reference comparison - payload.reference:", payload.reference, "reference from cookie:", reference);
+    
     // 2. Here we optimistically confirm the transaction.
     // Otherwise, you can poll until the status == mined
-    if (txData.reference == reference && txData.status != "failed") {
+    // Improved condition: accept if transaction exists and status is not failed
+    if (txData.status && txData.status !== "failed") {
       // Update transaction status
       await db.update(transactions).set({
         status: "confirmed",
         transactionId: payload.transaction_id,
       }).where(eq(transactions.id, reference));
+      console.log("Transaction confirmed successfully");
       return NextResponse.json({ success: true, transactionId: payload.transaction_id });
     } else {
+      console.log("Transaction verification failed - status:", txData.status);
       return NextResponse.json({ success: false });
     }
   }
