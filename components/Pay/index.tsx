@@ -80,13 +80,14 @@ const sendPayment = async (to: string, amount: number, senderDetails: SenderDeta
 
 export const PayBlock = () => {
   // Cotización del momento (WLD → USD) - Se puede integrar con API más adelante
-  const [exchangeRate, setExchangeRate] = useState<number>(2.50);
+  const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [selectedRecipient, setSelectedRecipient] = useState<string>("");
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<string>("");
   const [selectedToken, setSelectedToken] = useState<'WLD' | 'USDC'>('WLD');
   const [amount, setAmount] = useState<number>(0);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const [senderDetails, setSenderDetails] = useState<SenderDetails>({
     name: "",
     whatsapp: "",
@@ -121,11 +122,17 @@ export const PayBlock = () => {
       try {
         const res = await fetch('/api/price');
         const data = await res.json();
-        if (data.price) {
+        if (data.price && data.price > 0) {
           setExchangeRate(data.price);
+          setPriceError(null);
+        } else {
+          setPriceError('Error al obtener cotización');
+          setExchangeRate(0);
         }
       } catch (err) {
         console.error('Error fetching price:', err);
+        setPriceError('Error al obtener cotización');
+        setExchangeRate(0);
       }
     };
     fetchPrice();
@@ -348,22 +355,28 @@ export const PayBlock = () => {
           value={amount}
           onChange={(e) => setAmount(parseFloat(e.target.value))}
           className="border p-2 w-full"
-          min="0"
-          step="0.01"
-        />
-      </div>
-      
-      {/* Panel de Cotización y Comisión */}
-      <div className="mb-4 p-3 bg-gray-100 rounded">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-bold">Cotización del Día</h3>
-
+      {priceError ? (
+        <div className="mb-4 p-3 bg-red-100 rounded border border-red-400">
+          <p className="text-red-700 font-bold text-center">{priceError}</p>
+          <p className="text-red-600 text-xs text-center mt-2">Por favor, intenta nuevamente más tarde o recarga la página</p>
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-          <label className="block">1 {selectedToken} = USD:</label>
-          <span className="border p-2 bg-white font-bold text-sm break-all">${selectedToken === 'USDC' ? '1.00000000' : exchangeRate.toFixed(8)}</span>
+      ) : (
+        <div className="mb-4 p-3 bg-gray-100 rounded">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-bold">Cotización del Día</h3>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+            <label className="block">1 {selectedToken} = USD:</label>
+            <span className="border p-2 bg-white font-bold text-sm break-all">${selectedToken === 'USDC' ? '1.00000000' : exchangeRate.toFixed(8)}</span>
+          </div>
+          <div className="text-sm space-y-1">
+            <p>Monto en USD: <strong>${totalUSD.toFixed(2)}</strong></p>
+            <p className="text-red-500">Comisión (15%): <strong>-${brokerCommissionUSD.toFixed(2)}</strong></p>
+            <p className="text-green-500 font-bold">Total a recibir: <strong>${netAmountUSD.toFixed(2)}</strong></p>
+            <p className="text-gray-500 text-xs">Equivalente a <strong>{netAmountWLD.toFixed(4)} WLD</strong></p>
+          </div>
         </div>
-        <div className="text-sm space-y-1">
+      )} className="text-sm space-y-1">
           <p>Monto en USD: <strong>${totalUSD.toFixed(2)}</strong></p>
           <p className="text-red-500">Comisión (15%): <strong>-${brokerCommissionUSD.toFixed(2)}</strong></p>
           <p className="text-green-500 font-bold">Total a recibir: <strong>${netAmountUSD.toFixed(2)}</strong></p>
@@ -428,7 +441,7 @@ export const PayBlock = () => {
             <input
               type="text"
               value={senderDetails.bankName}
-              onChange={(e) => setSenderDetails({ ...senderDetails, bankName: e.target.value })}
+              onChange={(e) => setSenderDetails({ ...senderDetails, bankName disabled:bg-gray-400" onClick={handlePay} disabled={priceError !== null || exchangeRate === 0
               className="border p-2 w-full"
             />
           </div>
