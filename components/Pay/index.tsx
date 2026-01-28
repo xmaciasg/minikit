@@ -355,6 +355,11 @@ export const PayBlock = () => {
           value={amount}
           onChange={(e) => setAmount(parseFloat(e.target.value))}
           className="border p-2 w-full"
+          min="0"
+          step="0.01"
+        />
+      </div>
+      
       {priceError ? (
         <div className="mb-4 p-3 bg-red-100 rounded border border-red-400">
           <p className="text-red-700 font-bold text-center">{priceError}</p>
@@ -376,13 +381,7 @@ export const PayBlock = () => {
             <p className="text-gray-500 text-xs">Equivalente a <strong>{netAmountWLD.toFixed(4)} WLD</strong></p>
           </div>
         </div>
-      )} className="text-sm space-y-1">
-          <p>Monto en USD: <strong>${totalUSD.toFixed(2)}</strong></p>
-          <p className="text-red-500">Comisión (15%): <strong>-${brokerCommissionUSD.toFixed(2)}</strong></p>
-          <p className="text-green-500 font-bold">Total a recibir: <strong>${netAmountUSD.toFixed(2)}</strong></p>
-          <p className="text-gray-500 text-xs">Equivalente a <strong>{netAmountWLD.toFixed(4)} WLD</strong></p>
-        </div>
-      </div>
+      )}
 
       <div className="mb-4">
         <label className="block mb-2">Nombre:</label>
