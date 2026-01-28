@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { BackupNav } from '../../components/Navigation/BackupNav';
 
 export default function BackupPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -62,8 +63,10 @@ export default function BackupPage() {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Administrar Respaldos de Base de Datos</h1>
+    <>
+      <BackupNav />
+      <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4">Administrar Respaldos de Base de Datos</h1>
 
       <div className="mb-4">
         <button
@@ -109,6 +112,7 @@ export default function BackupPage() {
       </div>
 
       {status && <p className="mt-4">{status}</p>}
-    </div>
+      </div>
+    </>
   );
 }

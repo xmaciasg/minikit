@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
-  const [payfastUrl, setPayfastUrl] = useState<string>('');
+  const [payfastUrl, setPayfastUrl] = useState<string>('/sendmoney');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Obtener la URL del entorno
-    const url = process.env.NEXT_PUBLIC_PAYFAST_URL;
-    if (url) {
-      setPayfastUrl(`${url}/sendmoney`);
-    }
+    // Obtener la URL del entorno o usar valor por defecto
+    const url = process.env.NEXT_PUBLIC_PAYFAST_URL || window.location.origin;
+    setPayfastUrl(`${url}/sendmoney`);
+    setIsLoading(false);
   }, []);
 
   return (
@@ -38,7 +38,7 @@ export default function Home() {
         </div>
 
         {/* Botón de acceso a la mini-app */}
-        {payfastUrl ? (
+        {!isLoading ? (
           <Link
             href={payfastUrl}
             className="bg-white text-black font-bold py-3 px-8 rounded-lg hover:bg-gray-200 transition-colors text-lg w-full text-center"
