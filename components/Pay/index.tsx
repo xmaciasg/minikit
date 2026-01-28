@@ -98,11 +98,12 @@ export const PayBlock = () => {
   const [status, setStatus] = useState<string>("");
   const [transactionHash, setTransactionHash] = useState<string>("");
   const [transactionId, setTransactionId] = useState<string>("");
-  // const [walletBalances, setWalletBalances] = useState<{
-  //   WLD: string;
-  //   USDC: string;
-  // } | null>(null);
-  // const [walletError, setWalletError] = useState<string | null>(null);
+  const [walletBalances, setWalletBalances] = useState<{
+    WLD: string;
+    USDC: string;
+  } | null>(null);
+  const [walletError, setWalletError] = useState<string | null>(null);
+  const [loadingBalances, setLoadingBalances] = useState<boolean>(false);
 
   // Cálculos de comisión (15% para broker, 5% para agente - solo informativo)
   const brokerCommissionRate = 0.15;
@@ -133,48 +134,52 @@ export const PayBlock = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // const fetchWalletBalances = async () => {
-  //   try {
-  //     if (MiniKit.isInstalled()) {
-  //       const res = await fetch('/api/nonce');
-  //       const { nonce } = await res.json();
-  //       const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
-  //         nonce: nonce,
-  //         requestId: 'balance-check',
-  //         expirationTime: new Date(Date.now() + 5 * 60 * 1000),
-  //         notBefore: new Date(),
-  //         statement: 'Checking wallet balances.',
-  //       });
-  //       if (finalPayload.status === 'success' && finalPayload.address) {
-  //         const walletAddress = finalPayload.address;
-  //         const apiRes = await fetch(`/api/balances?address=${walletAddress}`);
-  //         if (!apiRes.ok) {
-  //           throw new Error('Failed to fetch balances from API');
-  //         }
-  //         const balances = await apiRes.json();
-  //         setWalletBalances({
-  //           WLD: balances.WLD,
-  //           USDC: balances.USDC,
-  //         });
-  //         setWalletError(null);
-  //       } else {
-  //         throw new Error('Wallet auth failed');
-  //       }
-  //     } else {
-  //       setWalletError('MiniKit no disponible');
-  //       setWalletBalances({
-  //         WLD: '0',
-  //         USDC: '0',
-  //       });
-  //     }
-  //   } catch (err) {
-  //     setWalletError(`Error: ${err instanceof Error ? err.message : 'Desconocido'}`);
-  //     setWalletBalances({
-  //       WLD: '0',
-  //       USDC: '0',
-  //     });
-  //   }
-  // };
+  const fetchWalletBalances = async () => {
+    setLoadingBalances(true);
+    setWalletError(null);
+    try {
+      if (MiniKit.isInstalled()) {
+        const res = await fetch('/api/nonce');
+        const { nonce } = await res.json();
+        const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
+          nonce: nonce,
+          requestId: 'balance-check',
+          expirationTime: new Date(Date.now() + 5 * 60 * 1000),
+          notBefore: new Date(),
+          statement: 'Checking wallet balances.',
+        });
+        if (finalPayload.status === 'success' && finalPayload.address) {
+          const walletAddress = finalPayload.address;
+          const apiRes = await fetch(`/api/balances?address=${walletAddress}`);
+          if (!apiRes.ok) {
+            throw new Error('Failed to fetch balances from API');
+          }
+          const balances = await apiRes.json();
+          setWalletBalances({
+            WLD: balances.WLD,
+            USDC: balances.USDC,
+          });
+          setWalletError(null);
+        } else {
+          throw new Error('Wallet auth failed');
+        }
+      } else {
+        setWalletError('MiniKit no disponible');
+        setWalletBalances({
+          WLD: '0',
+          USDC: '0',
+        });
+      }
+    } catch (err) {
+      setWalletError(`Error: ${err instanceof Error ? err.message : 'Desconocido'}`);
+      setWalletBalances({
+        WLD: '0',
+        USDC: '0',
+      });
+    } finally {
+      setLoadingBalances(false);
+    }
+  };
 
   useEffect(() => {
     // Fetch recipients from API
@@ -272,14 +277,48 @@ export const PayBlock = () => {
             </option>
           ))}
         </select>
-      </div>
-
-      <div className="mb-4">
-        <label className="block mb-2">Token:</label>
-        <select
-          value={selectedToken}
-          onChange={(e) => setSelectedToken(e.target.value as 'WLD' | 'USDC')}
-          className="border p-2 w-full"
+      </ddiv className="flex gap-2 mb-2">
+          <button
+            onClick={() => {
+              setSelectedToken('WLD');
+              if (walletBalances?.WLD) {
+                const balance = parseFloat(walletBalances.WLD);
+                setAmount(balance);
+              }
+            }}
+            className={`flex-1 p-3 rounded font-bold transition-colors ${
+              selectedToken === 'WLD'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            WLD {walletBalances?.WLD ? `(${parseFloat(walletBalances.WLD).toFixed(4)})` : ''}
+          </button>
+          <button
+            onClick={() => {
+              setSelectedToken('USDC');
+              if (walletBalances?.USDC) {
+                const balance = parseFloat(walletBalances.USDC);
+                setAmount(balance);
+              }
+            }}
+            className={`flex-1 p-3 rounded font-bold transition-colors ${
+              selectedToken === 'USDC'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            USDC {walletBalances?.USDC ? `(${parseFloat(walletBalances.USDC).toFixed(4)})` : ''}
+          </button>
+        </div>
+        <button
+          onClick={fetchWalletBalances}
+          disabled={loadingBalances}
+          className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400 text-sm"
+        >
+          {loadingBalances ? 'Obteniendo saldos...' : 'Obtener Saldos de Wallet'}
+        </button>
+        {walletError && <p className="mt-2 text-red-500 text-sm">{walletError}</p>}me="border p-2 w-full"
         >
           <option value="WLD">WLD</option>
           <option value="USDC">USDC</option>
