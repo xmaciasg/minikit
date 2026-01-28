@@ -1,18 +1,34 @@
 # Guía de Instalación y Despliegue de la App WorldCoin MiniKit
 
-Esta guía detalla el proceso paso a paso para desplegar la aplicación WorldCoin MiniKit en un servidor real, específicamente en un host compartido con panel Direct Admin. La aplicación es un template de Next.js que integra autenticación, verificación de identidad y pagos con WorldCoin.
+Esta guía detalla el proceso paso a paso para desplegar la aplicación WorldCoin MiniKit en un servidor real. La aplicación es un template de Next.js que integra autenticación, verificación de identidad y pagos con WorldCoin.
+
+## Despliegue en Railway (Recomendado)
+
+Railway es la opción más simple para desplegar Next.js con SQLite persistente.
+
+### Configuración Rápida en Railway
+
+1. Conecta tu repositorio a Railway
+2. En el panel de Railway, en tu servicio:
+   - Ve a "Volumes"
+   - Crea un nuevo volumen llamado `sqlite-data` montado en `/data`
+3. Agrega variable de entorno: `DATA_DIR=/data`
+4. Deploy automático desde tu rama
+
+Railway manejará el build y reinicio automático. Tu base de datos SQLite persistirá en el volumen.
+
+---
 
 ## Prerrequisitos
 
 Antes de comenzar, asegúrate de tener:
 
-- **Node.js 18 o superior** instalado localmente para el build.
+- **Node.js 20.18.0** instalado localmente para el build (versión recomendada).
 - **Cuenta en WorldCoin Developer Portal** con credenciales válidas (APP_ID, DEV_PORTAL_API_KEY, WLD_CLIENT_ID, WLD_CLIENT_SECRET).
-- **Servidor con Direct Admin** que soporte Node.js (verifica con tu proveedor de hosting).
-- **Acceso FTP o File Manager** en Direct Admin.
+- **Para Direct Admin**: Servidor que soporte Node.js con acceso SSH.
 - **Dominio configurado** apuntando al servidor.
 
-**Nota importante**: Los hosts compartidos con Direct Admin suelen estar optimizados para PHP/MySQL. Desplegar una app Node.js puede ser limitado o no soportado. Si es posible, considera alternativas como Vercel o Netlify para despliegues más sencillos de Next.js. Si insistes en Direct Admin, verifica que tu plan soporte Node.js via Passenger o setups personalizados.
+**Nota importante**: Para una mejor experiencia y soporte de volúmenes persistentes para SQLite, se recomienda Railway o Vercel sobre Direct Admin.
 
 ## Paso 1: Preparar el Código Localmente
 
