@@ -5,11 +5,11 @@ import path from 'path';
 import fs from 'fs';
 
 // Usar /data para volúmenes persistentes en Railway, o ./ en local
-const dataDir = process.env.DATA_DIR || '.';
+const dataDir = process.env.DATA_DIR || '/data';
 const dbPath = path.join(dataDir, 'sqlite.db');
 
 // Crear directorio si no existe
-if (!fs.existsSync(dataDir) && dataDir !== '.') {
+if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 

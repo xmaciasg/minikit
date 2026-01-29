@@ -16,12 +16,12 @@ Railway es la opción más simple para desplegar Next.js con SQLite persistente.
 
 2. **Crea un volumen persistente** (CRÍTICO - sin esto perderás datos)
    - En el servicio → "Volumes"
-   - Crea nuevo volumen con Mount Path: `/data`
+   - Crea nuevo volumen con Mount Path: `/app/data`
    - El nombre del volumen se asigna automáticamente
 
 3. **Agrega variable de entorno**
    - En el servicio → "Variables"
-   - Agrega: `DATA_DIR=/data`
+   - Agrega: `DATA_DIR=/app/data`
 
 4. **Deploy**
    - Railway hará build automático

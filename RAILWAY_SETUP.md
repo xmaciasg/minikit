@@ -12,7 +12,7 @@
 
 1. En tu servicio → "Volumes"
 2. "+ Add Volume"
-3. Mount Path: `/data`
+3. Mount Path: `/app/data`
 4. El volumen se crea automáticamente
 
 ### Paso 3: Configurar Variables de Entorno
@@ -21,7 +21,7 @@
 
 ```env
 # Base de datos
-DATA_DIR=/data
+DATA_DIR=/app/data
 
 # WorldCoin
 APP_ID=tu_app_id
